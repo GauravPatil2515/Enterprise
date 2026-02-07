@@ -103,14 +103,43 @@ const ChairpersonDashboard = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 skeleton rounded-xl" />
+          ))}
+        </div>
+        <div className="h-48 skeleton rounded-xl" />
+        <div className="h-64 skeleton rounded-xl" />
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 skeleton rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="p-6 space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
     >
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <motion.div variants={itemVariants} className="flex items-center gap-3">
         <div className="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 p-2.5 text-white shadow">
           <ShieldCheck className="h-5 w-5" />
         </div>
@@ -118,35 +147,37 @@ const ChairpersonDashboard = () => {
           <h1 className="text-2xl font-bold">Chairperson Dashboard</h1>
           <p className="text-sm text-muted-foreground">Risk overview • Agent opinions • Decision authority</p>
         </div>
-      </div>
+      </motion.div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-48 text-muted-foreground">Loading organization data...</div>
-      ) : (
+      {(
         <>
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Total Projects', value: projects.length, icon: <TrendingUp className="h-4 w-4" />, color: 'text-blue-400' },
-              { label: 'Active', value: activeProjects.length, icon: <Activity className="h-4 w-4" />, color: 'text-green-400' },
-              { label: 'With Blockers', value: blockedProjects.length, icon: <AlertTriangle className="h-4 w-4" />, color: 'text-red-400' },
-              { label: 'On Hold', value: projects.filter((p: any) => p.status === 'On Hold').length, icon: <Eye className="h-4 w-4" />, color: 'text-amber-400' },
+              { label: 'Total Projects', value: projects.length, icon: <TrendingUp className="h-4 w-4" />, color: 'bg-blue-500/10 text-blue-400' },
+              { label: 'Active', value: activeProjects.length, icon: <Activity className="h-4 w-4" />, color: 'bg-green-500/10 text-green-400' },
+              { label: 'With Blockers', value: blockedProjects.length, icon: <AlertTriangle className="h-4 w-4" />, color: 'bg-red-500/10 text-red-400' },
+              { label: 'On Hold', value: projects.filter((p: any) => p.status === 'On Hold').length, icon: <Eye className="h-4 w-4" />, color: 'bg-amber-500/10 text-amber-400' },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card p-4">
-                <div className={cn('flex items-center gap-2 text-sm mb-1', stat.color)}>
-                  {stat.icon}
-                  {stat.label}
+              <div key={stat.label} className="rounded-xl border bg-card p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={cn('flex h-9 w-9 items-center justify-center rounded-lg', stat.color)}>
+                    {stat.icon}
+                  </span>
                 </div>
-                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-xl font-bold">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             ))}
-          </div>
+          </motion.div>
 
           {/* AI Narrative */}
-          <NarrativeCard role="chairperson" />
+          <motion.div variants={itemVariants}>
+            <NarrativeCard role="chairperson" />
+          </motion.div>
 
           {/* Company Report Section */}
-          <div className="rounded-xl border bg-card p-6 space-y-4">
+          <motion.div variants={itemVariants} className="rounded-xl border bg-card p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Enterprise Intelligence Report</h2>
@@ -258,10 +289,10 @@ const ChairpersonDashboard = () => {
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Projects with Risk */}
-          <div>
+          <motion.div variants={itemVariants}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">All Projects — Risk Status</h2>
               <button
@@ -421,7 +452,7 @@ const ChairpersonDashboard = () => {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </motion.div>

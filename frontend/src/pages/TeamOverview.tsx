@@ -8,12 +8,28 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Clock,
+  Link as LinkIcon,
+  BarChart,
+  Palette,
+  Globe,
+  Image,
+  Coins,
+  type LucideIcon,
 } from 'lucide-react';
 import { useTeams } from '@/context/TeamsContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { SkeletonProjectCard } from '@/components/SkeletonLoaders';
 import { cn } from '@/lib/utils';
+
+const iconMap: Record<string, LucideIcon> = {
+  'Link': LinkIcon,
+  'BarChart': BarChart,
+  'Palette': Palette,
+  'Globe': Globe,
+  'Image': Image,
+  'Coins': Coins,
+};
 
 const TeamOverview = () => {
   const { state } = useTeams();
@@ -226,11 +242,14 @@ const TeamOverview = () => {
                   <Link
                     key={project.id}
                     to={`/project/${selectedTeam.id}/${project.id}`}
-                    className="group rounded-xl border bg-card p-5 transition-all card-hover"
+                    className="group rounded-xl border bg-card p-5 transition-all hover:shadow-md hover:border-primary/30"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{project.icon}</span>
+                        {(() => {
+                          const IconComp = iconMap[project.icon] || Globe;
+                          return <IconComp className="h-6 w-6 text-primary" />;
+                        })()}
                         <div>
                           <h3 className="font-semibold group-hover:text-primary transition-colors">
                             {project.name}

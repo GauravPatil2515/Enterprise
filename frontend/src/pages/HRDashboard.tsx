@@ -48,14 +48,38 @@ const HRDashboard = () => {
     return { from: overM, to: target };
   }).filter((r) => r.to);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-24 skeleton rounded-xl" />
+          ))}
+        </div>
+        <div className="h-48 skeleton rounded-xl" />
+        <div className="h-64 skeleton rounded-xl" />
+      </div>
+    );
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="p-6 space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
     >
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <motion.div variants={itemVariants} className="flex items-center gap-3">
         <div className="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-green-700 p-2.5 text-white shadow">
           <Users className="h-5 w-5" />
         </div>
@@ -63,94 +87,100 @@ const HRDashboard = () => {
           <h1 className="text-2xl font-bold">HR Dashboard</h1>
           <p className="text-sm text-muted-foreground">Team workload, burnout risk & member overview</p>
         </div>
-      </div>
+      </motion.div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-48 text-muted-foreground">Loading team data...</div>
-      ) : (
+      {(
         <>
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[
-              { label: 'Total Members', value: members.length, icon: <Users className="h-4 w-4" />, color: 'text-blue-400' },
-              { label: 'Active Workers', value: members.length - idle.length, icon: <UserCheck className="h-4 w-4" />, color: 'text-green-400' },
-              { label: 'Overloaded (3+)', value: overloaded.length, icon: <AlertTriangle className="h-4 w-4" />, color: 'text-red-400' },
-              { label: 'Burnout Risk', value: burnoutRisk.length, icon: <Flame className="h-4 w-4" />, color: 'text-orange-400' },
-              { label: 'Idle / Under-utilized', value: idle.length, icon: <Briefcase className="h-4 w-4" />, color: 'text-amber-400' },
+              { label: 'Total Members', value: members.length, icon: <Users className="h-4 w-4" />, color: 'bg-blue-500/10 text-blue-400' },
+              { label: 'Active Workers', value: members.length - idle.length, icon: <UserCheck className="h-4 w-4" />, color: 'bg-green-500/10 text-green-400' },
+              { label: 'Overloaded (3+)', value: overloaded.length, icon: <AlertTriangle className="h-4 w-4" />, color: 'bg-red-500/10 text-red-400' },
+              { label: 'Burnout Risk', value: burnoutRisk.length, icon: <Flame className="h-4 w-4" />, color: 'bg-orange-500/10 text-orange-400' },
+              { label: 'Idle / Under-utilized', value: idle.length, icon: <Briefcase className="h-4 w-4" />, color: 'bg-amber-500/10 text-amber-400' },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card p-4">
-                <div className={cn('flex items-center gap-2 text-sm mb-1', stat.color)}>
-                  {stat.icon}
-                  {stat.label}
+              <div key={stat.label} className="rounded-xl border bg-card p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={cn('flex h-9 w-9 items-center justify-center rounded-lg', stat.color)}>
+                    {stat.icon}
+                  </span>
                 </div>
-                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-xl font-bold">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Burnout Risk Alert */}
           {burnoutRisk.length > 0 && (
-            <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Flame className="h-5 w-5 text-orange-400" />
-                <h2 className="text-base font-semibold text-orange-400">Burnout Risk Alert</h2>
-                <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full ml-2">
-                  {burnoutRisk.length} member{burnoutRisk.length > 1 ? 's' : ''}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Members with {BURNOUT_THRESHOLD}+ active tickets are at elevated burnout risk. Consider redistributing work.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {burnoutRisk.map((member: any) => (
-                  <div key={member.id} className="flex items-center gap-3 rounded-lg border border-orange-500/20 bg-card p-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={member.avatar} />
-                      <AvatarFallback>{member.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{member.name}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{member.team}</span>
-                        <span className="text-xs font-bold text-orange-400">{member.active_tickets} tickets</span>
+            <motion.div variants={itemVariants}>
+              <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Flame className="h-5 w-5 text-orange-400" />
+                  <h2 className="text-base font-semibold text-orange-400">Burnout Risk Alert</h2>
+                  <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full ml-2">
+                    {burnoutRisk.length} member{burnoutRisk.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Members with {BURNOUT_THRESHOLD}+ active tickets are at elevated burnout risk. Consider redistributing work.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {burnoutRisk.map((member: any) => (
+                    <div key={`burnout-${member.id}`} className="flex items-center gap-3 rounded-lg border border-orange-500/20 bg-card p-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={member.avatar} />
+                        <AvatarFallback>{member.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{member.name}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{member.team}</span>
+                          <span className="text-xs font-bold text-orange-400">{member.active_tickets} tickets</span>
+                        </div>
                       </div>
+                      <ShieldAlert className="h-4 w-4 text-orange-400 shrink-0" />
                     </div>
-                    <ShieldAlert className="h-4 w-4 text-orange-400 shrink-0" />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Reassignment Suggestions */}
           {reassignments.length > 0 && (
-            <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <ArrowRightLeft className="h-5 w-5 text-blue-400" />
-                <h2 className="text-base font-semibold text-blue-400">Suggested Reassignments</h2>
+            <motion.div variants={itemVariants}>
+              <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ArrowRightLeft className="h-5 w-5 text-blue-400" />
+                  <h2 className="text-base font-semibold text-blue-400">Suggested Reassignments</h2>
+                </div>
+                <div className="space-y-2">
+                  {reassignments.map((r, i) => (
+                    <div key={`reassign-${r.from.id}-${r.to.id}`} className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm">
+                      <span className="font-medium text-orange-400">{r.from.name}</span>
+                      <span className="text-xs text-muted-foreground">({r.from.active_tickets} tickets)</span>
+                      <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="font-medium text-green-400">{r.to.name}</span>
+                      <span className="text-xs text-muted-foreground">({r.to.active_tickets} tickets)</span>
+                      <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" disabled>
+                        Suggest
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2">
-                {reassignments.map((r, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm">
-                    <span className="font-medium text-orange-400">{r.from.name}</span>
-                    <span className="text-xs text-muted-foreground">({r.from.active_tickets} tickets)</span>
-                    <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="font-medium text-green-400">{r.to.name}</span>
-                    <span className="text-xs text-muted-foreground">({r.to.active_tickets} tickets)</span>
-                    <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" disabled>
-                      Suggest
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+            </motion.div>
           )}
 
           {/* AI Narrative */}
-          <NarrativeCard role="hr" />
+          <motion.div variants={itemVariants}>
+            <NarrativeCard role="hr" />
+          </motion.div>
 
           {/* Workload Distribution */}
-          <div>
+          <motion.div variants={itemVariants}>
             <h2 className="text-lg font-semibold mb-3">Workload Distribution</h2>
             <div className="rounded-xl border bg-card p-4 space-y-3">
               {members.map((member: any) => {
@@ -158,7 +188,7 @@ const HRDashboard = () => {
                 const isOverloaded = member.active_tickets >= OVERLOAD_THRESHOLD;
                 const isBurnout = member.active_tickets >= BURNOUT_THRESHOLD;
                 return (
-                  <div key={member.id} className="flex items-center gap-4">
+                  <div key={`workload-${member.id}`} className="flex items-center gap-4">
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={member.avatar} />
                       <AvatarFallback>{member.name?.charAt(0)}</AvatarFallback>
@@ -201,14 +231,14 @@ const HRDashboard = () => {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
-          {/* Members List */}
-          <div>
+          {/* Members List */}}
+          <motion.div variants={itemVariants}>
             <h2 className="text-lg font-semibold mb-3">All Members</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {members.map((member: any) => (
-                <div key={member.id} className="rounded-xl border bg-card p-4 flex items-center gap-3">
+                <div key={`member-${member.id}`} className="rounded-xl border bg-card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={member.avatar} />
                     <AvatarFallback>{member.name?.charAt(0)}</AvatarFallback>
@@ -221,7 +251,7 @@ const HRDashboard = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </motion.div>

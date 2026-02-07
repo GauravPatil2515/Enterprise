@@ -221,7 +221,7 @@ const ChatPage = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold">AI Co-Pilot</h1>
+              <h1 className="text-sm font-bold">AI Co-Pilot</h1>
               <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-500">
                 LIVE
               </span>

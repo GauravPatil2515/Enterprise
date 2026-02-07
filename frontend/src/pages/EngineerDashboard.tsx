@@ -60,14 +60,42 @@ const EngineerDashboard = () => {
     tickets: tickets.filter((t: any) => t.status === s),
   }));
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 skeleton rounded-xl" />
+          ))}
+        </div>
+        <div className="h-48 skeleton rounded-xl" />
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-48 skeleton rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="p-6 space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
     >
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <motion.div variants={itemVariants} className="flex items-center gap-3">
         <div className="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 p-2.5 text-white shadow">
           <Code2 className="h-5 w-5" />
         </div>
@@ -75,38 +103,37 @@ const EngineerDashboard = () => {
           <h1 className="text-2xl font-bold">Engineer Dashboard</h1>
           <p className="text-sm text-muted-foreground">Your projects and tickets at a glance</p>
         </div>
-      </div>
+      </motion.div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading engineering data…
-        </div>
-      ) : (
+      {(
         <>
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Active Tickets', value: activeTickets.length, icon: <FolderKanban className="h-4 w-4" />, color: 'text-blue-400' },
-              { label: 'In Progress', value: myInProgress.length, icon: <Clock className="h-4 w-4" />, color: 'text-amber-400' },
-              { label: 'Completed', value: tickets.length - activeTickets.length, icon: <CheckCircle2 className="h-4 w-4" />, color: 'text-green-400' },
-              { label: 'High Priority', value: activeTickets.filter((t: any) => t.priority === 'High').length, icon: <AlertCircle className="h-4 w-4" />, color: 'text-red-400' },
+              { label: 'Active Tickets', value: activeTickets.length, icon: <FolderKanban className="h-4 w-4" />, color: 'bg-blue-500/10 text-blue-400' },
+              { label: 'In Progress', value: myInProgress.length, icon: <Clock className="h-4 w-4" />, color: 'bg-amber-500/10 text-amber-400' },
+              { label: 'Completed', value: tickets.length - activeTickets.length, icon: <CheckCircle2 className="h-4 w-4" />, color: 'bg-green-500/10 text-green-400' },
+              { label: 'High Priority', value: activeTickets.filter((t: any) => t.priority === 'High').length, icon: <AlertCircle className="h-4 w-4" />, color: 'bg-red-500/10 text-red-400' },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card p-4">
-                <div className={cn('flex items-center gap-2 text-sm mb-1', stat.color)}>
-                  {stat.icon}
-                  {stat.label}
+              <div key={stat.label} className="rounded-xl border bg-card p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={cn('flex h-9 w-9 items-center justify-center rounded-lg', stat.color)}>
+                    {stat.icon}
+                  </span>
                 </div>
-                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-xl font-bold">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             ))}
-          </div>
+          </motion.div>
 
           {/* AI Narrative */}
-          <NarrativeCard role="engineer" />
+          <motion.div variants={itemVariants}>
+            <NarrativeCard role="engineer" />
+          </motion.div>
 
           {/* Mini Kanban */}
-          <div>
+          <motion.div variants={itemVariants}>
             <h2 className="text-lg font-semibold mb-3">Ticket Board</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {grouped.map((col) => (
@@ -133,17 +160,17 @@ const EngineerDashboard = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Projects */}
-          <div>
+          <motion.div variants={itemVariants}>
             <h2 className="text-lg font-semibold mb-3">Projects</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects.map((proj: any) => (
                 <Link
                   key={proj.id}
                   to={`/project/${proj.teamId}/${proj.id}`}
-                  className="rounded-xl border bg-card p-4 hover:border-primary/50 transition-colors group"
+                  className="rounded-xl border bg-card p-4 hover:border-primary/50 hover:shadow-md transition-all group"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold">{proj.name}</h3>
@@ -155,7 +182,7 @@ const EngineerDashboard = () => {
                 </Link>
               ))}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </motion.div>

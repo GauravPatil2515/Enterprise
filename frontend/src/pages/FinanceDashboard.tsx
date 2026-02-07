@@ -105,14 +105,42 @@ const FinanceDashboard = () => {
     fill: CHART_COLORS[i % CHART_COLORS.length],
   }));
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="h-20 skeleton rounded-xl" />
+          ))}
+        </div>
+        <div className="h-48 skeleton rounded-xl" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-64 skeleton rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="p-6 space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 p-2.5 text-white shadow">
             <DollarSign className="h-5 w-5" />
@@ -139,39 +167,38 @@ const FinanceDashboard = () => {
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading decision economics data...
-        </div>
-      ) : (
+      {(
         <>
           {/* Top Stats — always visible */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+          <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             {[
-              { label: 'Teams', value: String(teams.length), icon: <Users className="h-3.5 w-3.5" />, color: 'text-blue-400' },
-              { label: 'Members', value: String(totalMembers), icon: <Users className="h-3.5 w-3.5" />, color: 'text-green-400' },
-              { label: 'Active Tickets', value: String(totalActiveTickets), icon: <FolderKanban className="h-3.5 w-3.5" />, color: 'text-purple-400' },
-              { label: 'Blocked', value: String(totalBlocked), icon: <Shield className="h-3.5 w-3.5" />, color: 'text-red-400' },
-              { label: 'Total CTC/mo', value: fmt(totalCTC), icon: <Wallet className="h-3.5 w-3.5" />, color: 'text-amber-400' },
-              { label: 'Revenue', value: fmt(totalRevenue), icon: <BadgeDollarSign className="h-3.5 w-3.5" />, color: 'text-emerald-400' },
-              { label: 'Net Profit', value: fmt(totalProfit), icon: totalProfit >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />, color: totalProfit >= 0 ? 'text-green-400' : 'text-red-400' },
-              { label: 'ROI', value: `${totalROI}%`, icon: <PieChart className="h-3.5 w-3.5" />, color: Number(totalROI) >= 0 ? 'text-green-400' : 'text-red-400' },
+              { label: 'Teams', value: String(teams.length), icon: <Users className="h-3.5 w-3.5" />, color: 'bg-blue-500/10 text-blue-400' },
+              { label: 'Members', value: String(totalMembers), icon: <Users className="h-3.5 w-3.5" />, color: 'bg-green-500/10 text-green-400' },
+              { label: 'Active Tickets', value: String(totalActiveTickets), icon: <FolderKanban className="h-3.5 w-3.5" />, color: 'bg-purple-500/10 text-purple-400' },
+              { label: 'Blocked', value: String(totalBlocked), icon: <Shield className="h-3.5 w-3.5" />, color: 'bg-red-500/10 text-red-400' },
+              { label: 'Total CTC/mo', value: fmt(totalCTC), icon: <Wallet className="h-3.5 w-3.5" />, color: 'bg-amber-500/10 text-amber-400' },
+              { label: 'Revenue', value: fmt(totalRevenue), icon: <BadgeDollarSign className="h-3.5 w-3.5" />, color: 'bg-emerald-500/10 text-emerald-400' },
+              { label: 'Net Profit', value: fmt(totalProfit), icon: totalProfit >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />, color: totalProfit >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400' },
+              { label: 'ROI', value: `${totalROI}%`, icon: <PieChart className="h-3.5 w-3.5" />, color: Number(totalROI) >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400' },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card p-3">
-                <div className={cn('flex items-center gap-1.5 text-[11px] mb-1', stat.color)}>
-                  {stat.icon}
-                  {stat.label}
+              <div key={stat.label} className="rounded-xl border bg-card p-3 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-1">
+                  <span className={cn('flex h-7 w-7 items-center justify-center rounded-lg', stat.color)}>
+                    {stat.icon}
+                  </span>
                 </div>
                 <p className="text-lg font-bold">{stat.value}</p>
+                <p className="text-[11px] text-muted-foreground">{stat.label}</p>
               </div>
             ))}
-          </div>
+          </motion.div>
 
           {/* AI Narrative */}
-          <NarrativeCard role="finance" />
+          <motion.div variants={itemVariants}>
+            <NarrativeCard role="finance" />
+          </motion.div>
 
           {/* ════════════ OVERVIEW TAB ════════════ */}
           {activeTab === 'overview' && (

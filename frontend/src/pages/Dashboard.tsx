@@ -16,12 +16,28 @@ import {
   Sparkles,
   Zap,
   ChevronRight,
+  Link as LinkIcon,
+  BarChart,
+  Palette,
+  Globe,
+  Image,
+  Coins,
+  type LucideIcon,
 } from 'lucide-react';
 import { useTeams } from '@/context/TeamsContext';
 import { SkeletonProjectCard } from '@/components/SkeletonLoaders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+
+const iconMap: Record<string, LucideIcon> = {
+  'Link': LinkIcon,
+  'BarChart': BarChart,
+  'Palette': Palette,
+  'Globe': Globe,
+  'Image': Image,
+  'Coins': Coins,
+};
 
 const Dashboard = () => {
   const { state, getAllProjects, getAllTickets } = useTeams();
@@ -197,7 +213,10 @@ const Dashboard = () => {
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2.5">
-                        <span className="text-xl">{project.icon}</span>
+                        {(() => {
+                          const IconComp = iconMap[project.icon] || Globe;
+                          return <IconComp className="h-5 w-5 text-primary" />;
+                        })()}
                         <div>
                           <h3 className="text-sm font-semibold group-hover:text-primary transition-colors">
                             {project.name}

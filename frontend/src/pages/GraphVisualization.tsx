@@ -216,7 +216,7 @@ const GraphVisualization = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold">Knowledge Graph</h1>
+              <h1 className="text-2xl font-bold">Knowledge Graph</h1>
               <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-xs font-medium text-indigo-400">
                 Neo4j
               </span>
