@@ -24,6 +24,7 @@ import {
   Wallet,
   BadgeDollarSign,
   Loader2,
+  Download,
 } from 'lucide-react';
 import { api, type DashboardData } from '@/services/api';
 import { Progress } from '@/components/ui/progress';
@@ -42,6 +43,7 @@ import {
   Pie,
   Legend,
 } from 'recharts';
+import { generateFinancialSummaryPDF } from '@/utils/pdfGenerator';
 
 const fmt = (n: number) =>
   n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${(n / 1_000).toFixed(0)}K` : `$${n}`;
@@ -85,6 +87,21 @@ const FinanceDashboard = () => {
   const totalProfit = totalRevenue - totalCTC;
   const totalROI = totalCTC > 0 ? ((totalProfit / totalCTC) * 100).toFixed(1) : '0';
   const totalBlocked = costAnalysis.reduce((acc: number, p: any) => acc + (p.blocked_count || 0), 0);
+
+  const handleDownloadPDF = () => {
+    try {
+      const fileName = generateFinancialSummaryPDF(
+        teams,
+        costAnalysis,
+        totalCTC,
+        totalRevenue,
+        totalProfit
+      );
+      import('sonner').then(({ toast }) => toast.success(`Financial summary downloaded: ${fileName}`));
+    } catch (err: any) {
+      import('sonner').then(({ toast }) => toast.error('Failed to generate PDF'));
+    }
+  };
 
   // Chart data
   const teamChartData = teams.map((t: any) => ({
@@ -140,7 +157,7 @@ const FinanceDashboard = () => {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div variants={itemVariants} className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 p-2.5 text-white shadow">
             <DollarSign className="h-5 w-5" />
@@ -152,8 +169,18 @@ const FinanceDashboard = () => {
             </p>
           </div>
         </div>
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1 rounded-lg border bg-muted/50 p-1">
+        <div className="flex items-center gap-2">
+          {/* Download PDF Button */}
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-500 text-amber-500 hover:bg-amber-500/10 transition-all text-sm"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export PDF
+          </button>
+          
+          {/* Tab Switcher */}
+          <div className="flex items-center gap-1 rounded-lg border bg-muted/50 p-1">
           {(['overview', 'teams', 'projects'] as const).map((tab) => (
             <button
               key={tab}
@@ -166,13 +193,12 @@ const FinanceDashboard = () => {
               {tab}
             </button>
           ))}
+          </div>
         </div>
       </motion.div>
 
-      {(
-        <>
-          {/* Top Stats — always visible */}
-          <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+      {/* Top Stats — always visible */}
+      <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             {[
               { label: 'Teams', value: String(teams.length), icon: <Users className="h-3.5 w-3.5" />, color: 'bg-blue-500/10 text-blue-400' },
               { label: 'Members', value: String(totalMembers), icon: <Users className="h-3.5 w-3.5" />, color: 'bg-green-500/10 text-green-400' },
@@ -610,8 +636,6 @@ const FinanceDashboard = () => {
               </div>
             </div>
           )}
-        </>
-      )}
     </motion.div>
   );
 };

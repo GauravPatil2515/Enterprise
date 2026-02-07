@@ -14,6 +14,7 @@ import {
   XCircle,
   Loader2,
   Clock,
+  Download,
 } from 'lucide-react';
 import { api, type DashboardData, type AnalysisResult } from '@/services/api';
 import { Progress } from '@/components/ui/progress';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 import NarrativeCard from '@/components/NarrativeCard';
 import ReactMarkdown from 'react-markdown';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { generateCompanyReportPDF } from '@/utils/pdfGenerator';
 
 const riskColors: Record<string, string> = {
   HIGH: 'text-red-400 bg-red-500/20',
@@ -38,26 +40,35 @@ const ChairpersonDashboard = () => {
   const [generatedReport, setGeneratedReport] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [reportTimestamp, setReportTimestamp] = useState<string | null>(null);
+  const [financeData, setFinanceData] = useState<any>(null);
 
   useEffect(() => {
-    api.getDashboardData('chairperson')
-      .then(setData)
+    // Fetch chairperson, company report, and finance data in parallel
+    Promise.all([
+      api.getDashboardData('chairperson'),
+      api.getCompanyReport(),
+      api.getDashboardData('finance')
+    ])
+      .then(([chairData, companyData, finData]) => {
+        setData(chairData);
+        setCompanyReport(companyData);
+        setFinanceData(finData);
+      })
       .catch((err) => {
         import('sonner').then(({ toast }) => toast.error(err?.message || 'Failed to load dashboard'));
       })
       .finally(() => setLoading(false));
-    
-    // Fetch company report data
-    api.getCompanyReport()
-      .then(setCompanyReport)
-      .catch((err) => {
-        console.error('Failed to load company report:', err);
-      });
   }, []);
 
   const projects = data?.projects || [];
   const blockedProjects = projects.filter((p: any) => p.blocked_count > 0);
   const activeProjects = projects.filter((p: any) => p.status === 'Ongoing');
+  
+  // Create lookup map for project financials
+  const projectFinancials = financeData?.cost_analysis?.reduce((acc: any, proj: any) => {
+    acc[proj.project_id] = proj;
+    return acc;
+  }, {}) || {};
 
   const handleAnalyze = async (projectId: string) => {
     setAnalyzingId(projectId);
@@ -100,6 +111,24 @@ const ChairpersonDashboard = () => {
       import('sonner').then(({ toast }) => toast.error(err?.message || 'Failed to generate company report'));
     } finally {
       setGeneratingReport(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!generatedReport || !companyReport?.summary || !reportTimestamp) {
+      import('sonner').then(({ toast }) => toast.error('Please generate a report first'));
+      return;
+    }
+    
+    try {
+      const fileName = generateCompanyReportPDF(
+        generatedReport,
+        companyReport.summary,
+        reportTimestamp
+      );
+      import('sonner').then(({ toast }) => toast.success(`PDF downloaded: ${fileName}`));
+    } catch (err: any) {
+      import('sonner').then(({ toast }) => toast.error('Failed to generate PDF'));
     }
   };
 
@@ -178,22 +207,34 @@ const ChairpersonDashboard = () => {
 
           {/* Company Report Section */}
           <motion.div variants={itemVariants} className="rounded-xl border bg-card p-6 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h2 className="text-lg font-semibold">Enterprise Intelligence Report</h2>
                 <p className="text-sm text-muted-foreground">AI-powered comprehensive company analysis</p>
               </div>
-              <button
-                onClick={handleGenerateCompanyReport}
-                disabled={generatingReport}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 transition-all disabled:opacity-50"
-              >
-                {generatingReport ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
-                ) : (
-                  <>🤖 Generate Full Report</>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleGenerateCompanyReport}
+                  disabled={generatingReport}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 transition-all disabled:opacity-50"
+                >
+                  {generatingReport ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
+                  ) : (
+                    <>🤖 Generate Full Report</>
+                  )}
+                </button>
+                
+                {generatedReport && (
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary text-primary hover:bg-primary/10 transition-all"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download PDF
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
 
             {/* Company Summary Stats */}
@@ -318,7 +359,7 @@ const ChairpersonDashboard = () => {
                   <div key={proj.id} className="rounded-xl border bg-card p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
                           <h3 className="font-semibold">{proj.name}</h3>
                           <span className="text-xs text-muted-foreground">({proj.team})</span>
                           <span
@@ -333,6 +374,28 @@ const ChairpersonDashboard = () => {
                           >
                             {proj.status}
                           </span>
+                          
+                          {/* Financial Metrics */}
+                          {projectFinancials[proj.id] && (
+                            <>
+                              <span className="text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-medium">
+                                💰 CTC: ${(projectFinancials[proj.id].cost_to_company / 1000).toFixed(0)}K
+                              </span>
+                              <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium">
+                                📈 Rev: ${(projectFinancials[proj.id].revenue / 1000).toFixed(0)}K
+                              </span>
+                              <span
+                                className={cn(
+                                  'text-xs px-2 py-0.5 rounded font-bold',
+                                  projectFinancials[proj.id].roi >= 0
+                                    ? 'bg-green-500/20 text-green-400'
+                                    : 'bg-red-500/20 text-red-400'
+                                )}
+                              >
+                                ROI: {projectFinancials[proj.id].roi}%
+                              </span>
+                            </>
+                          )}
                         </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span>{proj.active_tickets} active tickets</span>
