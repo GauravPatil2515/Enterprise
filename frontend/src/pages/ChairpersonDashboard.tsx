@@ -209,7 +209,7 @@ const ChairpersonDashboard = () => {
 
                         {/* Link to full analysis */}
                         <Link
-                          to={`/project/t1/${proj.id}/risk`}
+                          to={`/project/${proj.team_id || 't1'}/${proj.id}/risk`}
                           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                         >
                           View full analysis <ArrowUpRight className="h-3 w-3" />

@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   FolderKanban, 
   Users, 
-  Settings, 
   Shield,
   ChevronDown,
   ChevronRight,
@@ -13,6 +12,8 @@ import {
   X,
   UserCog,
   GitGraph,
+  Activity,
+  MessageCircle,
 } from 'lucide-react';
 import { useTeams } from '@/context/TeamsContext';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { icon: Users, label: 'Teams', path: '/teams' },
     { icon: FolderKanban, label: 'All Projects', path: '/projects' },
     { icon: GitGraph, label: 'Graph View', path: '/graph' },
+    { icon: MessageCircle, label: 'AI Chat', path: '/chat' },
   ];
 
   const sidebarContent = (
@@ -191,15 +193,12 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         </div>
       </nav>
 
-      {/* Bottom Settings */}
+      {/* Bottom */}
       <div className="border-t border-sidebar-border p-4">
-        <Link
-          to="/settings"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
-        >
-          <Settings className="h-4 w-4" />
-          Settings
-        </Link>
+        <div className="flex items-center gap-3 px-3 py-2 text-xs text-muted-foreground">
+          <Activity className="h-3.5 w-3.5" />
+          Decision Intelligence Platform
+        </div>
       </div>
     </div>
   );

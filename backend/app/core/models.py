@@ -3,6 +3,7 @@ Core Pydantic models for the Decision Intelligence Platform.
 Clean schema: only what agents need to reason + what the API returns.
 """
 from typing import List, Optional
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -55,3 +56,15 @@ class RoleDashboard(BaseModel):
     label: str
     permissions: List[str]
     dashboard_sections: List[str]
+
+
+class RiskSnapshot(BaseModel):
+    """Point-in-time risk snapshot for trend tracking."""
+    project_id: str
+    project_name: str = ""
+    risk_score: float
+    risk_level: str
+    blocked_count: int = 0
+    overdue_count: int = 0
+    total_tickets: int = 0
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())

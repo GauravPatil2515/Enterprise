@@ -103,6 +103,17 @@ export interface AnalysisResult {
   decision_comparison: DecisionComparison[];
 }
 
+export interface RiskSnapshot {
+  project_id: string;
+  project_name: string;
+  risk_score: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  blocked_count: number;
+  overdue_count: number;
+  total_tickets: number;
+  timestamp: string;
+}
+
 
 // ── Role-Based Types ──
 
@@ -176,6 +187,24 @@ export const api = {
   // Risk Analysis (AI)
   analyzeProject: (projectId: string) =>
     apiFetch<AnalysisResult>(`/analyze/${projectId}`),
+
+  // Risk History / Trends
+  saveRiskSnapshot: (projectId: string) =>
+    apiFetch<RiskSnapshot>(`/risk-snapshot/${projectId}`, { method: 'POST' }),
+
+  getRiskHistory: (projectId: string, limit = 30) =>
+    apiFetch<RiskSnapshot[]>(`/risk-history/${projectId}?limit=${limit}`),
+
+  // Postmortem Generator
+  generatePostmortem: (projectId: string) =>
+    apiFetch<{
+      project_id: string;
+      project_name: string;
+      risk_score: number;
+      risk_level: string;
+      postmortem: string;
+      generated_from: { signals_count: number; actions_count: number; agents_consulted: string[] };
+    }>(`/postmortem/${projectId}`),
 
   // Graph Visualisation
   getGraphData: () =>

@@ -210,6 +210,12 @@ class DeliveryRiskAgent:
                     for op in agent_opinions
                 ])
 
+                decision_table = "\n".join([
+                    f"- {d.action}: risk_reduction={d.risk_reduction:.0%}, cost={d.cost}, "
+                    f"feasible={d.feasible}, recommended={d.recommended}"
+                    for d in decision_comparison
+                ])
+
                 prompt = f"""
 Project: {project.get('name', project_id)} (Team: {team_name})
 Risk Score: {risk_score:.2f} ({risk_level})
@@ -221,10 +227,16 @@ Agent Opinions:
 Evidence from Graph (REAL ticket data):
 {chr(10).join(['- ' + r for r in reasons])}
 
+Decision Comparison Table:
+{decision_table}
+
 Recommended Actions:
 {chr(10).join(['- ' + a for a in actions])}
 
-Task: Summarize the PRIMARY risk driver and the BEST action in 2 sentences.
+Task: Provide a 3-sentence analysis:
+1. Summarize the PRIMARY risk driver using ONLY the evidence above.
+2. COUNTERFACTUAL: State what happens if NO action is taken (e.g. "If we do nothing, delivery will slip by X days because ...").
+3. CONTRAST the top two interventions from the Decision Comparison Table — explain which one is better and WHY (e.g. cost vs. risk-reduction trade-off).
 Do NOT introduce new facts. Only use the evidence above.
 """
                 primary_reason = llm_client.generate_reasoning(prompt)

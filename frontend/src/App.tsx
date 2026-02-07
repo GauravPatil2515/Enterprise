@@ -12,8 +12,7 @@ import TeamOverview from "./pages/TeamOverview";
 import RiskAnalysis from "./pages/RiskAnalysis";
 import RoleSelector from "./pages/RoleSelector";
 import RoleDashboard from "./pages/RoleDashboard";
-import GraphVisualization from "./pages/GraphVisualization";
-import NotFound from "./pages/NotFound";
+import GraphVisualization from "./pages/GraphVisualization";import ChatPage from './pages/ChatPage';import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +37,7 @@ const App = () => (
                 <Route path="/project/:teamId/:projectId" element={<ProjectView />} />
                 <Route path="/project/:teamId/:projectId/risk" element={<RiskAnalysis />} />
                 <Route path="/graph" element={<GraphVisualization />} />
+                <Route path="/chat" element={<ChatPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

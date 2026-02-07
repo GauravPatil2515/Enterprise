@@ -2,5 +2,4 @@ fastapi[standard]
 uvicorn
 pydantic-settings
 openai
-pandas
-networkx
+neo4j

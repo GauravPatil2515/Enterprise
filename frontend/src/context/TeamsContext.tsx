@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { Team, Project, Ticket, TicketStatus, initialTeams } from '@/utils/mockData';
+import { Team, Project, Ticket, TicketStatus } from '@/utils/types';
 import { api } from '@/services/api';
+import { toast } from 'sonner';
 
 interface TeamsState {
   teams: Team[];
@@ -164,21 +165,21 @@ export const TeamsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           return;
         }
       } catch (err) {
-        console.warn('⚠️ API unavailable, falling back to local data:', err);
-      }
-      
-      // Fallback: localStorage → mockData
-      if (!cancelled) {
-        const stored = localStorage.getItem('jira-clone-teams');
-        if (stored) {
-          try {
-            dispatch({ type: 'SET_TEAMS', payload: JSON.parse(stored) });
-            console.log('📦 Loaded teams from localStorage');
-            return;
-          } catch { /* ignore */ }
+        console.error('❌ API unavailable:', err);
+        // Try localStorage as offline cache only (data was originally from API)
+        if (!cancelled) {
+          const stored = localStorage.getItem('jira-clone-teams');
+          if (stored) {
+            try {
+              dispatch({ type: 'SET_TEAMS', payload: JSON.parse(stored) });
+              toast.warning('Loaded cached data — backend is unreachable');
+              return;
+            } catch { /* ignore corrupt cache */ }
+          }
+          // No cache available — show empty state with error
+          dispatch({ type: 'SET_TEAMS', payload: [] });
+          toast.error('Failed to connect to backend. Please ensure the server is running.');
         }
-        dispatch({ type: 'SET_TEAMS', payload: initialTeams });
-        console.log('🔧 Loaded teams from mockData');
       }
     };
 
