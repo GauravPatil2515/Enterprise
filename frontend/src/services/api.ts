@@ -1,9 +1,11 @@
 /**
  * API Service Layer
- * Connects frontend to FastAPI backend at /api/*
+ * Connects frontend to FastAPI backend.
+ * In dev: Vite proxy forwards /api → localhost:8000
+ * In prod: Set VITE_API_URL=https://your-backend.render.com/api
  */
 
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_API_URL as string) ?? '/api';
 
 // ============================================================================
 // Generic fetch wrapper
@@ -103,6 +105,17 @@ export interface AnalysisResult {
   decision_comparison: DecisionComparison[];
 }
 
+export interface RiskSnapshot {
+  project_id: string;
+  project_name: string;
+  risk_score: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  blocked_count: number;
+  overdue_count: number;
+  total_tickets: number;
+  timestamp: string;
+}
+
 
 // ── Role-Based Types ──
 
@@ -177,6 +190,24 @@ export const api = {
   analyzeProject: (projectId: string) =>
     apiFetch<AnalysisResult>(`/analyze/${projectId}`),
 
+  // Risk History / Trends
+  saveRiskSnapshot: (projectId: string) =>
+    apiFetch<RiskSnapshot>(`/risk-snapshot/${projectId}`, { method: 'POST' }),
+
+  getRiskHistory: (projectId: string, limit = 30) =>
+    apiFetch<RiskSnapshot[]>(`/risk-history/${projectId}?limit=${limit}`),
+
+  // Postmortem Generator
+  generatePostmortem: (projectId: string) =>
+    apiFetch<{
+      project_id: string;
+      project_name: string;
+      risk_score: number;
+      risk_level: string;
+      postmortem: string;
+      generated_from: { signals_count: number; actions_count: number; agents_consulted: string[] };
+    }>(`/postmortem/${projectId}`),
+
   // Graph Visualisation
   getGraphData: () =>
     apiFetch<{
@@ -190,4 +221,74 @@ export const api = {
   getSystemUsers: () => apiFetch<SystemUser[]>('/system-users'),
   getSystemUser: (userId: string) => apiFetch<SystemUser>(`/system-users/${userId}`),
   getDashboardData: (role: string) => apiFetch<DashboardData>(`/dashboard/${role}`),
+
+  // Executive AI Narrative
+  getNarrative: (role: string) =>
+    apiFetch<{ role: string; narrative: string }>(`/narrative/${role}`),
+
+  // Company Report (Chairperson)
+  getCompanyReport: () =>
+    apiFetch<{
+      teams: any[];
+      projects: any[];
+      workforce: any[];
+      summary: {
+        total_teams: number;
+        total_members: number;
+        total_projects: number;
+        total_active_tickets: number;
+        total_done_tickets: number;
+        total_blocked: number;
+        avg_progress: number;
+        completion_rate: number;
+        overloaded_members: number;
+        idle_members: number;
+      };
+    }>('/company-report'),
+
+  generateCompanyReport: () =>
+    apiFetch<{
+      report: string;
+      summary: any;
+      generated_at: string;
+    }>('/company-report/generate', { method: 'POST' }),
+
+  // Team Composition Simulator
+  getSimulatorRoles: () =>
+    apiFetch<Record<string, {
+      velocity_boost: number;
+      ramp_up_days: number;
+      cost_per_day: number;
+      blocked_resolution: number;
+    }>>('/simulate-team/roles'),
+
+  simulateTeam: (
+    projectId: string,
+    mutations: { action: string; role: string; member_name?: string }[],
+    baselineRisk?: number,
+  ) =>
+    apiFetch<{
+      project_id: string;
+      baseline_risk: number;
+      simulations: {
+        mutation: { action: string; role: string; project_id: string; member_name?: string };
+        baseline_risk: number;
+        projected_risk: number;
+        risk_delta: number;
+        cost_delta: number;
+        velocity_change: number;
+        confidence: number;
+        reasoning: string;
+        feasible: boolean;
+        warning: string | null;
+      }[];
+      available_roles: string[];
+    }>('/simulate-team', {
+      method: 'POST',
+      body: JSON.stringify({
+        project_id: projectId,
+        mutations,
+        baseline_risk: baselineRisk,
+      }),
+    }),
 };
